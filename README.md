@@ -10,6 +10,7 @@ dashboard-tv/
 ├── nginx.conf           # Configuração do servidor (allowlist de IPs + Basic Auth)
 ├── .htpasswd            # Credenciais de acesso (gerado localmente, não vai ao Git)
 ├── .gitignore           # Ignora .htpasswd, PDFs e arquivos de editor
+├── make_htpasswd.ps1    # Gera o .htpasswd com encoding correto (use sempre este)
 ├── show_ip.ps1          # Exibe a URL local para digitar na TV
 └── html/
     └── index.html       # Página principal com iframe do dashboard
@@ -38,19 +39,17 @@ Abra [html/index.html](html/index.html) e substitua `__SET_URL_HERE__` pela URL 
 
 O `.htpasswd` armazena as credenciais de acesso ao dashboard. Ele **não vai ao GitHub** (está no `.gitignore`) e deve ser gerado localmente em cada máquina onde o projeto for executado.
 
-Execute o comando abaixo, substituindo `seu-usuario` e `sua-senha`:
+Use o script incluso no projeto — ele resolve o problema de encoding automaticamente:
 
-```bash
-docker run --rm httpd:alpine htpasswd -nbB seu-usuario sua-senha > .htpasswd
+```powershell
+.\make_htpasswd.ps1
 ```
 
-Exemplo:
+O script pede usuário e senha interativamente e grava o `.htpasswd` em ASCII, único encoding aceito pelo nginx.
 
-```bash
-docker run --rm httpd:alpine htpasswd -nbB dashboard minhasenha > .htpasswd
-```
+> **Nunca use `docker run ... > .htpasswd` no PowerShell.** O operador `>` salva em UTF-16, que o nginx não consegue ler — a autenticação falha silenciosamente para qualquer usuário/senha.
 
-> O hash gerado usa bcrypt (`-B`), seguro contra ataques de força bruta.
+> O hash gerado usa APR-MD5 (`-m`), único algoritmo suportado pelo `nginx:alpine`. Bcrypt (`-B`) **não funciona** com nginx na Alpine Linux (musl libc) — a autenticação falha silenciosamente.
 
 ### 3. Ajuste a faixa de IP da sua rede (se necessário)
 
@@ -112,8 +111,8 @@ Passos para subir o projeto em um novo computador (ex: notebook do trabalho):
    ```
 
 2. Gerar o `.htpasswd` localmente (use o mesmo usuário e senha do ambiente original):
-   ```bash
-   docker run --rm httpd:alpine htpasswd -nbB seu-usuario sua-senha > .htpasswd
+   ```powershell
+   .\make_htpasswd.ps1
    ```
 
 3. Confirmar que a URL do dashboard está configurada em `html/index.html`.
