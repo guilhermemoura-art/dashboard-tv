@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <!-- Refresh forçado a cada 150 segundos (2 min e 30 seg) -->
+  <meta http-equiv="refresh" content="150">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; }
+    iframe { width: 100vw; height: 100vh; border: none; }
+
+    
+    #ip-overlay {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.2);
+      z-index: 9999;
+      transition: opacity 1s ease;
+      user-select: text;
+    }
+    #ip-overlay.hidden { opacity: 0; pointer-events: none; }
+    #ip-overlay span { color: #7dd3fc; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  
+  <iframe
+    src="__SET_URL_HERE__"
+    allowfullscreen
+    id="dashboard-frame">
+  </iframe>
+
+  <!--
+     Exibe a URL de acesso para apontar na TV.
+  -->
+  <div id="ip-overlay">
+    Acesse na TV: <span id="ip-url">carregando...</span>
+  </div>
+
+  <script>
+
+    // Anti-idle: 1 — Atualiza título a cada 10s 
+    setInterval(() => {
+      document.title = new Date().toLocaleTimeString('pt-BR');
+    }, 10000);
+
+    // Anti-idle: 2 — Scroll mínimo no iframe a cada 30s 
+    setInterval(() => {
+      const f = document.getElementById('dashboard-frame');
+      if (f && f.contentWindow) {
+        f.contentWindow.scrollBy(0, 1);
+        f.contentWindow.scrollBy(0, -1);
+      }
+    }, 30000);
+
+    // Anti-idle: 3 — Reload se ficou invisível por mais de 10 min 
+    let lastHidden = 0;
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        lastHidden = Date.now();
+      } else if (Date.now() - lastHidden > 600000) {
+        location.reload();
+      }
+    });
+
+    // Anti-idle: 4 — Wake Lock API (impede SO apagar tela)
+    async function requestWakeLock() {
+      try {
+        await navigator.wakeLock.request('screen');
+      } catch (e) {
+        console.warn('Wake Lock indisponível:', e);
+      }
+    }
+    requestWakeLock();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) requestWakeLock();
+    });
+  </script>
+
+</body>
+</html>

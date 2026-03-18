@@ -1,0 +1,19 @@
+# PDF do guia (documentação de referência, não precisa versionar)
+*.pdf
+
+# Windows
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Docker override local
+docker-compose.override.yml
+
+# Credenciais locais (nunca versionar)
+.htpasswd
